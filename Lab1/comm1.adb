@@ -9,6 +9,8 @@ use Ada.Text_IO;
 procedure comm1 is
     Message: constant String := "Process communication";
 	task buffer is
+      entry Put (item: in Integer);
+      entry Get (item: out Integer);
             -- add your task entries for communication 
 	end buffer;
 
@@ -22,11 +24,30 @@ procedure comm1 is
 
 	task body buffer is 
 		Message: constant String := "buffer executing";
-                -- change/add your local declarations here   
+      type Int_Array is array (0 .. 9) of Integer;
+      buf : Int_Array;
+      Head : Integer := 0;
+      Tail: Integer := 0;
+      Count: Integer := 0;
+      Capacity: Integer := 10;
+                -- change/add your local declarations here  
 	begin
 		Put_Line(Message);
 		loop
-                -- add your task code inside this loop    
+         select
+            when Count < Capacity =>
+               accept Put(item : in Integer) do 
+                  buf(Tail) := item;
+                  Tail := (Tail + 1) mod Capacity;
+                  Count := Count + 1;
+               end Put; 
+            or when Count > 0 => 
+               accept Get(Item : out Integer) do 
+                  Item := buf(Head + 1);
+                  Head := (Heead + 1) mod Capacity;
+                  Count := Count - 1;
+               end get; 
+            end select; 
 		end loop;
 	end buffer;
 

@@ -1,0 +1,42 @@
+# Ada object and library files
+*.ali
+*.o
+*.so
+*.dll
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+
+# GNAT project files
+*.gpr
+*.gprbuild
+*.gprconfig
+
+# GNAT build artifacts
+obj/
+bin/
+lib/
+build/
+*.gprbuild-lock
+
+# AdaCore GPS IDE files
+.gps/
+.gpsbackup/
+
+# Temporary files
+*.tmp
+*.log
+*.bak
+*.swp
+
+# Coverage and test reports
+*.gcov
+*.gcda
+*.gcno
+
+# OS-specific files
+.DS_Store
+Thumbs.db

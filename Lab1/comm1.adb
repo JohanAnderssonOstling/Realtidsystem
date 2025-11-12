@@ -1,82 +1,115 @@
---Process commnication: Ada lab part 3
-
 with Ada.Calendar;
+with Ada.Numerics.Float_Random;
 with Ada.Text_IO;
 with Ada.Numerics.Discrete_Random;
 use Ada.Calendar;
 use Ada.Text_IO;
+use Ada.Numerics.Float_Random;
 
-procedure comm1 is
-    Message: constant String := "Process communication";
-	task buffer is
-      entry Put (item: in Integer);
-      entry Get (item: out Integer);
-            -- add your task entries for communication 
-	end buffer;
+procedure Comm1 is
+   Message : constant String := "Process communication";
 
-	task producer is
-            -- add your task entries for communication  
-	end producer;
+   -- float random generator for delays
+   Delay_Gen : Generator;
 
-	task consumer is
-            -- add your task entries for communication 
-	end consumer;
+   -- integer random generator for items
+   subtype Integer_Range is Integer range 0 .. 20;
+   package Random_Integer is new Ada.Numerics.Discrete_Random (Integer_Range);
+   Int_Gen : Random_Integer.Generator;
 
-	task body buffer is 
-		Message: constant String := "buffer executing";
+   task Buffer is
+      entry Put (Item : in Integer);
+      entry Get (Item : out Integer);
+      entry Stop;
+   end Buffer;
+
+   task Producer is
+      entry Stop;
+   end Producer;
+   task Consumer;
+
+   task body Buffer is
+      Message : constant String := "buffer executing";
       type Int_Array is array (0 .. 9) of Integer;
-      buf : Int_Array;
-      Head : Integer := 0;
-      Tail: Integer := 0;
-      Count: Integer := 0;
-      Capacity: Integer := 10;
-                -- change/add your local declarations here  
-	begin
-		Put_Line(Message);
-		loop
+      Buf : Int_Array;
+      Head, Tail, Count : Integer := 0;
+      Capacity : constant Integer := 10;
+   begin
+      Put_Line(Message);
+      loop
          select
             when Count < Capacity =>
-               accept Put(item : in Integer) do 
-                  buf(Tail) := item;
+               accept Put(Item : in Integer) do
+                  Buf(Tail) := Item;
                   Tail := (Tail + 1) mod Capacity;
                   Count := Count + 1;
-               end Put; 
-            or when Count > 0 => 
-               accept Get(Item : out Integer) do 
-                  Item := buf(Head + 1);
-                  Head := (Heead + 1) mod Capacity;
+               end Put;
+         or
+            when Count > 0 =>
+               accept Get(Item : out Integer) do
+                  Item := Buf(Head);
+                  Head := (Head + 1) mod Capacity;
                   Count := Count - 1;
-               end get; 
-            end select; 
-		end loop;
-	end buffer;
+               end Get;
+         or accept Stop do 
+            null;
+         end Stop;
+         exit;
+         end select;
+      end loop;
+   end Buffer;
 
-	task body producer is 
-		Message: constant String := "producer executing";
-                -- change/add your local declarations here
-	begin
-		Put_Line(Message);
-		loop
-                -- add your task code inside this loop  
-		end loop;
-	end producer;
+   task body Producer is
+      Message : constant String := "producer executing";
+      Item : Integer;
+      Delay_Time : Float;
 
-	task body consumer is 
-		Message: constant String := "consumer executing";
-                -- change/add your local declarations here
-	begin
-		Put_Line(Message);
-		Main_Cycle:
-		loop 
-                -- add your task code inside this loop 
-		end loop Main_Cycle; 
+   begin
+      Put_Line(Message);
+      Reset(Delay_Gen);
+      Random_Integer.Reset(Int_Gen);
 
-                -- add your code to stop executions of other tasks     
-		exception
-			  when TASKING_ERROR =>
-				  Put_Line("Buffer finished before producer");
-		Put_Line("Ending the consumer");
-	end consumer;
+      loop
+         Delay_Time := Random(Delay_Gen) * 0.1;
+         select
+            delay Duration(Delay_Time);
+            Item := Random_Integer.Random(Int_Gen);
+            Put_Line("Put item" & Integer'Image(Item));
+
+            Buffer.Put(Item);
+            or 
+               accept Stop do
+                  null;
+               end Stop;
+               exit;
+         end select;
+      end loop;
+   end Producer;
+
+   task body Consumer is
+      Message : constant String := "consumer executing";
+      Item : Integer;
+            Delay_Time : Float;
+
+      Sum : Integer := 0;
+   begin
+      Put_Line(Message);
+      loop
+         Delay_Time := Random(Delay_Gen) * 10.0;
+
+         delay Duration(Delay_Time);
+         Buffer.Get(Item);
+         Sum := Sum + Item;
+         if (Sum >= 100) then 
+            Put_Line("Färdig!");
+            Buffer.Stop;
+            Producer.Stop;
+            exit;
+         end if;
+         Put_Line("Got item" & Integer'Image(Item));
+      end loop;
+   end Consumer;
+
 begin
-	Put_Line(Message);
-end comm1;
+   Put_Line(Message);
+end Comm1;

@@ -38,7 +38,6 @@ procedure cyclic is
 
 begin
    loop
-      -- choose what to run in this minor cycle
       case s is
          when 0 =>
             f1;

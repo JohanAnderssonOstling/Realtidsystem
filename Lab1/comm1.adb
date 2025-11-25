@@ -89,7 +89,7 @@ procedure Comm1 is
    task body Consumer is
       Message : constant String := "consumer executing";
       Item : Integer;
-            Delay_Time : Float;
+      Delay_Time : Float;
 
       Sum : Integer := 0;
    begin
@@ -102,8 +102,9 @@ procedure Comm1 is
          Sum := Sum + Item;
          if (Sum >= 100) then 
             Put_Line("Färdig!");
-            Buffer.Stop;
             Producer.Stop;
+            Buffer.Stop;
+
             exit;
          end if;
          Put_Line("Got item" & Integer'Image(Item));
